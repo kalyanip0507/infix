@@ -1,0 +1,131 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <ctype.h>
+
+char stack[20];
+int top = -1;
+
+void push(char x) {
+    stack[++top] = x;
+}
+
+char pop() {
+    if (top == -1) {
+        return -1;
+    } else {
+        return stack[top--];
+    }
+}
+
+int priority(char x) {
+    if (x == '(') return 0;
+    if (x == '+' || x == '-') return 1;
+    if (x == '*' || x == '/') return 2;
+    if(x == '^') return 3;
+    return -1;
+}
+
+void reverse(char *exp) {
+    int n = strlen(exp);
+    for (int i = 0; i < n / 2; i++) {
+        char temp = exp[i];
+        exp[i] = exp[n - i - 1];
+        exp[n - i - 1] = temp;
+    }
+}
+
+void infixToPostfix(char *exp, char *result) {
+    char *e = exp;
+    char *r = result;
+    
+    while (*e != '\0') {
+        if (isalnum(*e)) {
+            *r++ = *e;
+        } else if (*e == '(') {
+            push(*e);
+        } else if (*e == ')') {
+            while (top != -1 && stack[top] != '(') {
+                *r++ = pop();
+            }
+            pop();
+        } else {
+            while (top != -1 && priority(stack[top]) >= priority(*e)) {
+                *r++ = pop();
+            }
+            push(*e);
+        }
+        e++;
+    }
+    
+    while (top != -1) {
+        *r++ = pop();
+    }
+    *r = '\0'; 
+}
+
+void infixToPrefix(char *exp, char *result) {
+   
+    reverse(exp);
+    
+    for (int i = 0; exp[i]; i++) {
+        if (exp[i] == '(') {
+            exp[i] = ')';
+        } else if (exp[i] == ')') {
+            exp[i] = '(';
+        }
+    }
+    
+    
+    char postfix[20];
+    infixToPostfix(exp, postfix);
+
+    reverse(postfix);
+    strcpy(result, postfix);
+}
+
+int evaluatePostfix(char *postfix) {
+    int valueStack[20];
+    int topValue = -1;
+
+    for (char *e = postfix; *e != '\0'; e++) {
+        if (isdigit(*e)) {
+           
+            valueStack[++topValue] = *e - '0'; 
+        } else {
+          
+            int val2 = valueStack[topValue--];
+            int val1 = valueStack[topValue--];
+
+            switch (*e) {
+                case '+': valueStack[++topValue] = val1 + val2; break;
+                case '-': valueStack[++topValue] = val1 - val2; break;
+                case '*': valueStack[++topValue] = val1 * val2; break;
+                case '/': valueStack[++topValue] = val1 / val2; break;
+                case '^': valueStack[++topValue] = val1 ^ val2; break;
+            }
+        }
+    }
+
+    return valueStack[topValue]; 
+}
+
+int main() {
+    char exp[20], prefix[20];
+    
+    printf("Enter the infix expression: ");
+    scanf("%s", exp);
+    
+    
+    infixToPrefix(exp, prefix);
+    printf("The prefix expression is: %s\n", prefix);
+ 
+    char postfix[20];
+    infixToPostfix(exp, postfix); 
+    // printf("The postfix expression is: %s\n", postfix);
+    
+    int result = evaluatePostfix(postfix);
+    printf("The result of postfix evaluation is: %d\n", result);
+    
+    return 0;
+}
